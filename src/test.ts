@@ -1,14 +1,60 @@
 import {Struct} from './struct';
 
-export function RunStructTest() {
-    var assertVal = function (str: string, cond: boolean) {
-        if (cond) {
-            console.log("PASSED: Testing " + str);
-        }
-        else {
-            console.log("FAILED: Testing " + str);
-        }
+var assertVal = function (str: string, cond: boolean) {
+    if (cond) {
+        console.log("PASSED: Testing " + str);
     }
+    else {
+        console.log("FAILED: Testing " + str);
+    }
+}
+function RunFunctionTest() {
+    var Test = Struct.Create([
+        {name: 'x', type: 'int8', val: 1},
+        {name: 'y', type: 'int16', val: 2},
+        {name: 'z', type: 'int32', val: 3},
+        {name: 'w', type: 'float64', val: 4},
+    ], {
+        sum: function(arg1: number) {
+            var thisArg: any = this;
+            return (thisArg.x + thisArg.y + thisArg.z + thisArg.w + arg1);
+        }
+    });
+    var instance = new Test();
+    instance.x = 3;
+    assertVal("Function Test", instance.sum(5) == 17); //prints  (3 + 2 + 3 + 4 + 5) = 17
+}
+function RunPackingTest() {
+    var Test1 = Struct.Create([
+        {name: 'x', type: 'int8', val: 1},
+        {name: 'y', type: 'int16', val: 2},
+        {name: 'z', type: 'int32', val: 3},
+        {name: 'w', type: 'float64', val: 4},
+    ], {}, 1);
+    var Test2 = Struct.Create([
+        {name: 'x', type: 'int8', val: 1},
+        {name: 'y', type: 'int16', val: 2},
+        {name: 'z', type: 'int32', val: 3},
+        {name: 'w', type: 'float64', val: 4},
+    ], {}, 2);
+    var Test4 = Struct.Create([
+        {name: 'x', type: 'int8', val: 1},
+        {name: 'y', type: 'int16', val: 2},
+        {name: 'z', type: 'int32', val: 3},
+        {name: 'w', type: 'float64', val: 4},
+    ], {}, 4);
+    var Test8 = Struct.Create([
+        {name: 'x', type: 'int8', val: 1},
+        {name: 'y', type: 'int16', val: 2},
+        {name: 'z', type: 'int32', val: 3},
+        {name: 'w', type: 'float64', val: 4},
+    ], {}, 8);
+    console.log(`Padding 1 size ${Test1.size}`);
+    console.log(`Padding 2 size ${Test2.size}`);
+    console.log(`Padding 4 size ${Test4.size}`);
+    console.log(`Padding  size ${Test8.size}`);
+}
+export function RunStructTest() {
     //compile structure definition
     var TestStrDArr = Struct.Create([
             { name: 'str', type: 'char[2]', val: Struct.ArrayOf('int8', 2) },
@@ -70,7 +116,7 @@ export function RunStructTest() {
         { name: 'ivar', type: 'int', val: 4 },
         { name: 'cvar', type: 'int8', val: 1 },
         { name: 'dvar', type: 'double', val: 3.5 }
-    ], undefined, 2);
+    ], {}, 2);
     {
         var sz = icd.size;
         var offivar = icd.offsetof('ivar');
@@ -86,11 +132,11 @@ export function RunStructTest() {
     var t1 = Struct.Create([
         { name: 'dvar', type: 'double', val: 3.5 },
         { name: 'cvar', type: 'int8', val: 1 },
-    ], undefined, 4);
+    ], {}, 4);
     var t2 = Struct.Create([
         { name: 'cvar', type: 'int8', val: 1 },
         { name: 't12', type: 'struct[2]', val: Struct.ArrayOf(t1, 2) },
-    ], undefined, 8);
+    ], {}, 8);
 
     sz = t1.size;
     assertVal("Test Packing 4: Offset of dvar", t1.offsetof('dvar') === 0);
@@ -128,5 +174,6 @@ export function RunStructTest() {
     assertVal("Test dynamic structure: check array value 1", newins.arr[0] === 2.3);
     //////////////////////////////////////////////////////////////////////
 }
-
+RunFunctionTest();
+RunPackingTest();
 RunStructTest();

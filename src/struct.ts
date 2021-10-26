@@ -486,14 +486,14 @@ export class Struct {
         }
         this.assign(initialzationArgs);
     }
-    assign(namedVal: any) {
+    assign(namedVal: {[key: string]: any} | ArrayBuffer) {
         var structObj: any = this;
         var struct = structObj.__struct__;
         if (struct === undefined || !(struct.prototype instanceof Struct))
             throw "Not a struct type";
 
         if (Object.prototype.toString.call(namedVal) === "[object ArrayBuffer]")
-            this.read(namedVal, 0);
+            this.read(<ArrayBuffer>namedVal, 0);
         else if (namedVal !== undefined)
             assignMembers(namedVal, structObj);
     };
@@ -507,8 +507,8 @@ export class Struct {
     };
     static unique: number = 0;
     static size: number = 0;
-    static sizeof(structObj1: typeof Struct | Struct): number {
-        let structObj: any = structObj1;
+    static sizeof(obj: typeof Struct | Struct): number {
+        let structObj: any = obj;
         if (structObj.prototype instanceof Struct)
             return structObj.size;
 
@@ -554,8 +554,8 @@ export class Struct {
         }
         throw "Type is not struct type";
     };
-    static buffer(structObj1: Struct): ArrayBuffer {
-        let structObj: any = structObj1;
+    static buffer(obj: Struct): ArrayBuffer {
+        let structObj: any = obj;
         var struct = structObj.__struct__;
         if (struct === undefined || !(struct.prototype instanceof Struct))
             throw "Not a struct type";
