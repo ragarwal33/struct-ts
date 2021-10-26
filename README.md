@@ -4,7 +4,7 @@ Create C/C++ Style struct in Typescript.
 
 Installation
 ------------
-    npm install struct-ts
+    npm install @ragarwal33/struct-ts
 
 Supports
 --------

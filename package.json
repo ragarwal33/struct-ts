@@ -1,6 +1,6 @@
 {
-  "name": "struct-ts",
-  "version": "1.0.0",
+  "name": "@ragarwal33/struct-ts",
+  "version": "1.0.1",
   "description": "C compatible struct with padding and array support ",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,6 +14,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/ragarwal33/struct-ts.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/ragarwal33"
   },
   "devDependencies": {
     "typescript": "4.0.8"
