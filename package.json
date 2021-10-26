@@ -1,0 +1,21 @@
+{
+  "name": "struct-ts",
+  "version": "1.0.0",
+  "description": "C compatible struct with padding and array support ",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node dist/test.js",
+    "e2e": "npm run build && npm run test"
+  },
+  "author": "Rahul Agarwal",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ragarwal33/struct-ts.git"
+  },
+  "devDependencies": {
+    "typescript": "4.0.8"
+  }
+}
