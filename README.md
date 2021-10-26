@@ -9,7 +9,7 @@ Installation
 Supports
 --------
 1. Padding
-2. constant size array as member
+2. Constant size array as member
 3. Dynamic size array as last member
 4. Serialization/Deserialiation
 5. Easy member access
@@ -163,3 +163,5 @@ Supported Native Member Types
 License
 --
     MIT
+Keywords
+--

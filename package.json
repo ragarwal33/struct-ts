@@ -1,6 +1,6 @@
 {
   "name": "@ragarwal33/struct-ts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "C compatible struct with padding and array support ",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,5 +20,6 @@
   },
   "devDependencies": {
     "typescript": "4.0.8"
-  }
+  },
+  "keywords": ["c", "cplusplus", "struct", "structure", "serialization", "typescript"]
 }
