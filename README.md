@@ -67,8 +67,9 @@ Member function Example
             print: function(arg1: number) {
                 var thisArg: any = this;    //to avoid typescript error
                 console.log(thisArg.x + thisArg.y + thisArg.z + thisArg.w + arg1);
+            }
         }
-    });
+    );
     var instance = new Test();
     instance.x = 3;
     instance.print(5); //prints  (3 + 2 + 3 + 4 + 5) = 17
