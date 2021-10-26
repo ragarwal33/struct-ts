@@ -42,12 +42,10 @@ Usage
 This will create a Test class having abi compatibility with the C Struct for default packing size of 8 bytes
 
 The full definition of Struct.Create is <br>
-<code>
     Create(mems: MemberDefinition[], memfns?: MemberFunctionObject, packing?: number): typeof Struct
 
     Here mems is the member of the structs,
-    memfns is optional function that the struct object will have, packing is structure packing size (default is 8)
-</code>
+    memfns is optional functions that the struct object can have, packing is structure packing size (default is 8)
 
 Serialization
 --
@@ -108,7 +106,7 @@ Member Access
 --
 Members can be simply accessed or assigned as any other property of the object
 
-Dynamic Array memmber
+Dynamic Array member
 --
     Motivation
     C++ Example
@@ -163,5 +161,3 @@ Supported Native Member Types
 License
 --
     MIT
-Keywords
---
