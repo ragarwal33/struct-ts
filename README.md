@@ -1,6 +1,6 @@
 struct-ts
 
-Create C Style struct in Typescript.
+Create C/C++ Style struct in Typescript.
 
 Installation
 ------------
@@ -11,6 +11,9 @@ Supports
 1. Padding
 2. constant size array as member
 3. Dynamic size array as last member
+4. Serialization/Deserialiation
+5. Easy member access
+6. Can embed the created structure into another structure
 
 Usage
 -----
@@ -41,6 +44,9 @@ This will create a Test class having abi compatibility with the C Struct for def
 The full definition of Struct.Create is <br>
 <code>
     Create(mems: MemberDefinition[], memfns?: MemberFunctionObject, packing?: number): typeof Struct
+
+    Here mems is the member of the structs,
+    memfns is optional function that the struct object will have, packing is structure packing size (default is 8)
 </code>
 
 Serialization
@@ -49,9 +55,6 @@ Serialization
 Deserialization
 --
     var instance: Test = new Test(buffer);
-
-Here mems is the member of the structs,
-memfns is optional function that the struct object will have, packing is structure packing size (default is 8)
 
 Member function Example
 ------
