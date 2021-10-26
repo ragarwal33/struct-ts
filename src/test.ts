@@ -54,7 +54,7 @@ function RunPackingTest() {
     console.log(`Padding 4 size ${Test4.size}`);
     console.log(`Padding  size ${Test8.size}`);
 }
-export function RunStructTest() {
+function RunStructTest() {
     //compile structure definition
     var TestStrDArr = Struct.Create([
             { name: 'str', type: 'char[2]', val: Struct.ArrayOf('int8', 2) },
