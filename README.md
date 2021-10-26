@@ -65,7 +65,8 @@ Member function Example
             {name: 'w', type: 'float64', val: 4},
         ], {
             print: function(arg1: number) {
-                console.log(this.x + this.y + this.z + this.w + arg1);
+                var thisArg: any = this;    //to avoid typescript error
+                console.log(thisArg.x + thisArg.y + thisArg.z + thisArg.w + arg1);
         }
     });
     var instance = new Test();
