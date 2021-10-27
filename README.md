@@ -8,25 +8,27 @@ Installation
 
 Supports
 --------
-1. Padding
-2. Constant size array as member
-3. Dynamic size array as last member
-4. Serialization/Deserialiation
-5. Easy member access
-6. Can embed the created structure into another structure
+1. Automatic Padding
+2. Multiple Packing Support (1, 2, 4, 8, 16)
+3. Constant size array as member
+4. Dynamic size array as last member
+5. Serialization/Deserialiation
+6. Easy member access
+7. Can embed the created structure into another structure
 
 Usage
 -----
-
-    Definition of C Struct
+```cpp
+    //Definition of C++ Struct
     struct Test {
         char x;
         short y;
         int z;
         double w;
     }
-
-    Definition in struct-ts
+```
+```typescript
+    //Definition in struct-ts
     var Test = Struct.Create([
         {name: 'x', type: 'char', val: 1},
         {name: 'y', type: 'short', val: 2},
@@ -36,14 +38,15 @@ Usage
 
     //instantiate object of struct Test
     var instance = new Test();  //this will create instance with the default value specified while creating the definition
-    Or
+    //Or
     var instance = new Test ({x: 2, z: 5}); //this will override the default value of x and z with the new values provided
-
+```
 This will create a Test class having abi compatibility with the C Struct for default packing size of 8 bytes
 
 The full definition of Struct.Create is <br>
+```typescript
     Create(mems: MemberDefinition[], memfns?: MemberFunctionObject, packing?: number): typeof Struct
-
+```
     Here mems is the member of the structs,
     memfns is optional functions that the struct object can have, packing is structure packing size (default is 8)
 
@@ -56,6 +59,7 @@ Deserialization
 
 Member function Example
 ------
+```typescript
     var Test = Struct.Create([
             {name: 'x', type: 'int8', val: 1},
             {name: 'y', type: 'int16', val: 2},
@@ -71,9 +75,10 @@ Member function Example
     var instance = new Test();
     instance.x = 3;
     instance.print(5); //prints  (3 + 2 + 3 + 4 + 5) = 17
-
+```
 Packing Example
 --
+```typescript
     the above struct defined with packing 1, 2, 4, 8
     var Test1 = Struct.Create(..., {}, 1);
     var Test2 = Struct.Create(..., {}, 2);
@@ -89,9 +94,10 @@ Packing Example
     console.log(Test4.offsetof('y') == 2)
     console.log(Test4.offsetof('z') == 4)
     console.log(Test4.offsetof('w') == 8)
-
+```
 More Examples
 --
+```typescript
     var Test = Struct.Create([
         {name: 'x', type: 'char[2]', val: "ab"},
         {name: 'y', type: 'int[2]', val: [2, 3]},
@@ -101,7 +107,7 @@ More Examples
         {name: 'arrTest', type: 'struct[2]', val: Struct.ArrayOf(Test, 2)},
         {name: 'anotherArr', type: 'struct[2]', val: [new Test(), new Test()]}
     ])
-
+```
 Member Access
 --
 Members can be simply accessed or assigned as any other property of the object
@@ -109,7 +115,8 @@ Members can be simply accessed or assigned as any other property of the object
 Dynamic Array member
 --
     Motivation
-    C++ Example
+```cpp
+    //C++ Example
     struct Test {
         int num;
         char[1] data;
@@ -118,8 +125,9 @@ Dynamic Array member
     mem->num = 50;
     char buffer[50] = "<your favourite buffer>";
     memcpy(mem->data, buffer, 50);
-
-    on the typescript side
+```
+```typescript
+    //on the typescript side
     var Test = Struct.Create([
         {name: 'num', type: 'int', val: 0},
         {name: 'data', type: 'char[*]', val: []}
@@ -127,19 +135,20 @@ Dynamic Array member
 
     var instance = new Test(<received buff>);
     console.log(instance.data.length == 50);
+```
+If the dynamic type is char[*] then the type of member created is string
+otherwise for any other type the typed array is created for native type liek Uint8Array, Int8Array and so on
+for struct type Struct[] type is created
 
-    if the dynamic type is char[*] then the type of member created is string
-    otherwise for any other type the typed array is created for native type liek Uint8Array, Int8Array and so on
-    for struct type Struct[] type is created
+Note
+--
+*The dynamic size member can only be the last member of the structure and the type of dynamic member should not contain any other dynamic size member*
 
-    Note
-    --
-    The dynamic size member can only be the last member of the structure and the type of dynamic member should not contain any other dynamic size member
-
-    For more examples see Test.ts file
+For more examples see Test.ts file
 
 API
 --
+```typescript
     export declare class Struct {
         [key: string]: any;
         assign(namedVal: {[key: string]: any} | ArrayBuffer): void;
@@ -151,12 +160,13 @@ API
         static buffer(obj: Struct): ArrayBuffer;
         static Create(mems: MemberDefinition[], memfns?: MemberFunctionObject, packing?: number): typeof Struct;
     }
+```
 Supported Native Member Types
 ---
-    char, int8, uint8,
-    int16, short uint16, ushort,
-    int32, uint32, int, uint
-    float32, float64. float, double
+* char, int8, uint8,
+* int16, short uint16, ushort,
+* int32, uint32, int, uint
+* float32, float64. float, double
 
 License
 --
