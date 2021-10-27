@@ -479,14 +479,14 @@ export interface MemberDefinition {
 
 export class Struct {
     [key: string]: any;
-    constructor(initialzationArgs?: any, obj?: any){
+    constructor(initialzationArgs?: {[key: string]: any} | ArrayBuffer, obj?: any){
         for (var i = 0; i < obj.mems.length; ++i) {
             var m = obj.mems[i].name;
             (<any>this)[m] = obj.mems[i].val;
         }
         this.assign(initialzationArgs);
     }
-    assign(namedVal: {[key: string]: any} | ArrayBuffer) {
+    assign(namedVal?: {[key: string]: any} | ArrayBuffer) {
         var structObj: any = this;
         var struct = structObj.__struct__;
         if (struct === undefined || !(struct.prototype instanceof Struct))
@@ -529,7 +529,7 @@ export class Struct {
             return sz;
         }
     }
-    static offsetof(member: string): number | undefined {return undefined;}
+    static offsetof(member: string): number {return -1;}
     static CreateMatchHeader(includeMember: {[key: string]: any}): ArrayBuffer {return <any>null;}
     static ArrayOf(type: string | typeof Struct, numElem: number) {
         if (typeof (type) === 'string') {
@@ -593,11 +593,11 @@ export class Struct {
             constructor(init_args: any) {
                 super(init_args, NamedStruct);
             }
-            static offsetof(member: string): number | undefined {
+            static offsetof(member: string): number {
                 if (NamedStruct.def.hasOwnProperty(member))
-                    return NamedStruct.def[member].off;
+                    return <number>NamedStruct.def[member].off;
                 else
-                    return undefined;
+                    return -1;
             }
             static CreateMatchHeader(includeMember: {[key: string]: boolean}): ArrayBuffer {
                 return serializeForMatchHeader(NamedStruct, includeMember);
