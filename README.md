@@ -111,6 +111,7 @@ var Test = Struct.Create([
 var TestEmbedded = Struct.Create([
     {name: 'arrTest', type: `${Test.type}[2]`, val: Struct.ArrayOf(Test, 2)},
     {name: 'anotherArr', type: `${Test.type}[2]`, val: [new Test(), new Test()]}
+    {name: 'yetAnotherMember', type: Test.type, val: new Test({x: "ac"})},
 ])
 ```
 Member Access
