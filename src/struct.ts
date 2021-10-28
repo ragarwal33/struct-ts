@@ -20,7 +20,7 @@ export interface MemberFunctionObject {
     [key: string]: MemberFn;
 }
 
-var extractTypeInfo = function(type: string)
+var extractTypeInfo = function(type: string) : {type: string, sz: number, arr: boolean}
 {
     var regex = /(\w+)\[(\*|\d+)\]/g;
     var t = type;
@@ -36,24 +36,20 @@ var extractTypeInfo = function(type: string)
     }
     return { type: t, sz: 1, arr: false };
 }
-var typeSize = function(type: string, isArr: boolean, val: any, forMaxSz: boolean) {
+var typeSize = function(type: string, isArr: boolean, val: any, forMaxSz: boolean): number {
     var sz = 0;
-    switch (type) {
-        case 'struct': {
-            if(forMaxSz)
-                sz = (isArr ? val[0].__struct__.alignSize : val.__struct__.alignSize);
-            else
-                sz = (isArr ? val[0].__struct__.size : val.__struct__.size);
-            break;
-        }
-        default: {
-            sz = (<any>TypedArr)[type][1];
-            break;
-        }
+    if(isRegisteredStruct(type)) {
+        if(forMaxSz)
+            sz = (isArr ? val[0].__struct__.alignSize : val.__struct__.alignSize);
+        else
+            sz = (isArr ? val[0].__struct__.size : val.__struct__.size);
+    }
+    else {
+        sz = (<any>TypedArr)[type][1];
     }
     return sz;
 }
-var GetSize = function (val: any, mem: MemberDefinition, forMaxSz?: boolean) {
+var GetSize = function (val: any, mem: MemberDefinition, forMaxSz?: boolean): number {
     forMaxSz = (forMaxSz !== undefined ? forMaxSz : false);
     var typeInfo = extractTypeInfo(mem.type);
     var t = typeInfo.type;
@@ -68,7 +64,7 @@ var GetSize = function (val: any, mem: MemberDefinition, forMaxSz?: boolean) {
     return sz * arrSz;
 }
 
-var serializeArrayMember = function (buff: Uint8Array, val: any, isArray: boolean, arrSz: number) {
+var serializeArrayMember = function (buff: Uint8Array, val: any, isArray: boolean, arrSz: number): void {
     if(isArray)
     {
         var minSize = Math.min(val.length, arrSz);
@@ -87,8 +83,7 @@ var serializeArrayMember = function (buff: Uint8Array, val: any, isArray: boolea
         buff[0] = val;
     }
 }
-var serializeStructBuffer = function(val: any, isArr: boolean, arrSz: number)
-{
+var serializeStructBuffer = function(val: any, isArr: boolean, arrSz: number): ArrayBuffer {
     if (!isArr)
         return Struct.buffer(val);
     else {
@@ -104,7 +99,7 @@ var serializeStructBuffer = function(val: any, isArr: boolean, arrSz: number)
     }
 }
 
-var serializeMember = function (mem: MemberDefinition, val: any) {
+var serializeMember = function (mem: MemberDefinition, val: any): ArrayBuffer {
     var buff = null;
     var typeInfo = extractTypeInfo(mem.type);
     var t = typeInfo.type;
@@ -112,17 +107,15 @@ var serializeMember = function (mem: MemberDefinition, val: any) {
     if (arrSz === -1)
         arrSz = val.length;
     var isArr = typeInfo.arr;
-    switch (t) {
-        case 'struct': { return serializeStructBuffer(val, isArr, arrSz); break; }
-        default: {
-            buff = new (<any>TypedArr)[t][0](arrSz);
-            break;
-        }
+    if(isRegisteredStruct(t))
+        return serializeStructBuffer(val, isArr, arrSz);
+    else {
+        buff = new (<any>TypedArr)[t][0](arrSz);
+        serializeArrayMember(buff, val, isArr, arrSz);
+        return buff.buffer;
     }
-    serializeArrayMember(buff, val, isArr, arrSz);
-    return buff.buffer;
 }
-var deSerializeArrayMember = function (buff: Uint8Array, isArray: boolean, type: string, arrSz: number) {
+var deSerializeArrayMember = function (buff: Uint8Array, isArray: boolean, type: string, arrSz: number): any {
     if (isArray) {
         if (type === 'char') {
             //put the result in string
@@ -150,7 +143,7 @@ var deSerializeArrayMember = function (buff: Uint8Array, isArray: boolean, type:
         return buff[0];
     }
 }
-var deSerializeStructBuffer = function (ab: ArrayBuffer, off: number, val: any, isArr: boolean, arrSz: number) {
+var deSerializeStructBuffer = function (ab: ArrayBuffer, off: number, val: any, isArr: boolean, arrSz: number): number {
     if (!isArr)
         return deserialize(ab, off, val);
     else {
@@ -165,7 +158,7 @@ var deSerializeStructBuffer = function (ab: ArrayBuffer, off: number, val: any, 
         return offset;
     }
 }
-var deSerializeMember = function (ab: ArrayBuffer, off: number, obj: any, mem: MemberDefinition) {
+var deSerializeMember = function (ab: ArrayBuffer, off: number, obj: any, mem: MemberDefinition): void {
     var buff = null;
     var typeInfo = extractTypeInfo(mem.type);
     var t = typeInfo.type;
@@ -175,21 +168,20 @@ var deSerializeMember = function (ab: ArrayBuffer, off: number, obj: any, mem: M
         arrSz = (ab.byteLength - off) / typeSize(t, typeInfo.arr, mem.val, false);
     }
     var isArr = typeInfo.arr;
-    switch (t) {
-        case 'struct': { return deSerializeStructBuffer(ab, off, obj[mem.name], isArr, arrSz); break; }
-        default: {
-            if(off % (<any>TypedArr)[t][1] == 0)
-                buff = new (<any>TypedArr)[t][0](ab, off, arrSz);
-            else {
-                let buff1 = ab.slice(off, off + arrSz * (<any>TypedArr)[t][1]);
-                buff = new (<any>TypedArr)[t][0](buff1, 0, arrSz);
-            }
-            break;
-        }
+    if(isRegisteredStruct(t)){
+        deSerializeStructBuffer(ab, off, obj[mem.name], isArr, arrSz);
     }
-    obj[mem.name] = deSerializeArrayMember(buff, isArr, t, arrSz);
+    else {
+        if(off % (<any>TypedArr)[t][1] == 0)
+            buff = new (<any>TypedArr)[t][0](ab, off, arrSz);
+        else {
+            let buff1 = ab.slice(off, off + arrSz * (<any>TypedArr)[t][1]);
+            buff = new (<any>TypedArr)[t][0](buff1, 0, arrSz);
+        }
+        obj[mem.name] = deSerializeArrayMember(buff, isArr, t, arrSz);
+    }
 }
-var copyBuffer = function (dest: ArrayBuffer, off: number, src: ArrayBuffer, len: number) {
+var copyBuffer = function (dest: ArrayBuffer, off: number, src: ArrayBuffer, len: number): number {
     var uint8Dst = new Uint8Array(dest, off);
     var uint8Src = new Uint8Array(src);
     for (var i = 0; i < len; ++i) {
@@ -197,7 +189,7 @@ var copyBuffer = function (dest: ArrayBuffer, off: number, src: ArrayBuffer, len
     }
     return uint8Src.length;
 }
-var appendBuffer = function (buff: ArrayBuffer, typedArr: any, val?: any ) {
+var appendBuffer = function (buff: ArrayBuffer, typedArr: any, val?: any ): ArrayBuffer {
     var arrayBuf = null;
     if (Object.prototype.toString.call(typedArr) === "[object ArrayBuffer]") {
         arrayBuf = typedArr;
@@ -244,7 +236,7 @@ var serializeForMatchHeader = function (struct: any, includeMember: {[key: strin
     return buff;
 }
 
-var serialize = function (obj: Struct) {
+var serialize = function (obj: Struct): ArrayBuffer {
     var struct = (<any>obj).__struct__;
     var sz = Struct.sizeof(obj);
 
@@ -260,7 +252,7 @@ var serialize = function (obj: Struct) {
     }
     return buff;
 }
-var deserialize = function (ab: ArrayBuffer, off: number, obj: any) {
+var deserialize = function (ab: ArrayBuffer, off: number, obj: any): number {
     var struct = obj.__struct__;
     var sz = struct.size;
     var mems = struct.mems;
@@ -271,7 +263,11 @@ var deserialize = function (ab: ArrayBuffer, off: number, obj: any) {
     }
     return sz;
 }
-var isCompatibleArray = function (val: any, type: string, arrSz: number) {
+var isRegisteredStruct = function(type: string): boolean {
+    var regex = /^struct\d+$/;
+    return regex.test(type)
+}
+var isCompatibleArray = function (val: any, type: string, arrSz: number): boolean {
     var typeCheck = false;
     switch(type)
     {
@@ -354,21 +350,68 @@ var isCompatibleArray = function (val: any, type: string, arrSz: number) {
                 }
                 break;
             }
-        case 'struct':
-            {
-                if (val instanceof Array) {
-                    typeCheck = true;
+        default: {
+            if(isRegisteredStruct(type) && val instanceof Array) {
+                //it may be registered struct type
+                for(let i = 0; i < val.length; ++i) {
+                    var struct = (<any>val[i]).__struct__;
+                    if(!struct || struct.type !== type)
+                        throw new Error(`Struct of type ${type} required at index ${i} in the provided array`);
                 }
-                break;
+                typeCheck = true;
             }
+            break;
+        }
     }
     if (!(arrSz == -1 || arrSz == val.length || (type == 'char' && typeof(val) === 'string' && arrSz >= val.length))) {
         typeCheck = false;
     }
     return typeCheck;
 }
-var checkMember = function(val: any, mem: MemberDefinition)
-{
+var isCompatibleValue = function (val: any, type: string): boolean {
+    var typeCheck = false;
+    switch(type)
+    {
+        case 'char':
+        case 'int8':
+        case 'uint8':
+            {
+                if (typeof (val) == 'string' && val.length == 1 || (typeof(val) == 'number' && val < 256)) {
+                    typeCheck = true;
+                }
+                break;
+            }
+        case 'short':
+        case 'ushort':
+        case 'int16':
+        case 'uint16':
+        case 'int':
+        case 'uint':
+        case 'int32':
+        case 'uint32':
+        case 'float32':
+        case 'float64':
+        case 'float':
+        case 'double':
+            {
+                if (typeof(val) == 'number') {
+                    typeCheck = true;
+                }
+                break;
+            }
+        default: {
+            if(isRegisteredStruct(type)) {
+                var struct = (<any>val).__struct__;
+                if(!struct || struct.type !== type)
+                    throw new Error(`Struct of type ${type} required`);
+                typeCheck = true;
+            }
+            break;
+        }
+    }
+    return typeCheck;
+}
+var checkMember = function(val: any, mem: MemberDefinition): void {
     var type = mem.type;
     //verify type of the value
     var typeInfo = extractTypeInfo(type);
@@ -377,17 +420,16 @@ var checkMember = function(val: any, mem: MemberDefinition)
     var isArr = typeInfo.arr;
     if (isArr) {
         var b = isCompatibleArray(val, t, arrSz);
-        if (b && t === 'struct')
-        {
-            //additional check for struct
-            if (val[0].__struct__ !== mem.val[0].__struct__)
-                throw "member mismatch";
-        }
-        else if(!b)
-            throw "member mismatch";
+        if(!b)
+            throw new Error("member type mismatch");
+    }
+    else {
+        var b = isCompatibleValue(val, t);
+        if(!b)
+            throw new Error("member type mismatch");
     }
 }
-var checkStructMembers = function (namedVal: {[key: string]: any}, obj: Struct) {
+var checkStructMembers = function (namedVal: {[key: string]: any}, obj: Struct): boolean {
     var struct = (<any>obj).__struct__;
     var def = struct.def;
     var keys = Object.keys(namedVal);
@@ -395,7 +437,7 @@ var checkStructMembers = function (namedVal: {[key: string]: any}, obj: Struct) 
         var key = keys[i];
 
         if (!def.hasOwnProperty(key)) {
-            return "member " + key  + " not found";
+            throw new Error("member " + key  + " not found");
         }
         var val = namedVal[key];
         var mem = def[key];
@@ -403,7 +445,7 @@ var checkStructMembers = function (namedVal: {[key: string]: any}, obj: Struct) 
     }
     return true;
 };
-var assignMembers = function (namedVal: {[key: string]: any}, obj: Struct) {
+var assignMembers = function (namedVal: {[key: string]: any}, obj: Struct): void {
     if (checkStructMembers(namedVal, obj)) {
         var keys = Object.keys(namedVal);
         for (var i = 0; i < keys.length; ++i) {
@@ -412,7 +454,7 @@ var assignMembers = function (namedVal: {[key: string]: any}, obj: Struct) {
         }
     }
 }
-var adjustOffset = function (off: number, sz: number, packing: number) {
+var adjustOffset = function (off: number, sz: number, packing: number): number {
     //start of member should be aligned to its size or packing which ever is minimum
     var min = Math.min(packing, sz);
     var intPart = ~~(off / min);
@@ -422,7 +464,7 @@ var adjustOffset = function (off: number, sz: number, packing: number) {
     }
     return intPart * min;
 }
-var buildOffset = function (mems: MemberDefinition[], packing: number) {
+var buildOffset = function (mems: MemberDefinition[], packing: number): { size: number, alignSize: number, dynamic: boolean } {
     var off = 0;
     var maxSz = 0;
     var dynamic = false;
@@ -430,7 +472,7 @@ var buildOffset = function (mems: MemberDefinition[], packing: number) {
         var mem = mems[i];
         var typeInfo = extractTypeInfo(mem.type);
         if (typeInfo.sz === -1 && i < mems.length - 1)
-            throw "Variable size array can only come at the end of the struct";
+            throw new Error("Variable size array can only come at the end of the struct");
         if (typeInfo.sz === -1)
             dynamic = true;
 
@@ -446,22 +488,19 @@ var buildOffset = function (mems: MemberDefinition[], packing: number) {
     return { size: off, alignSize: min, dynamic: dynamic };
 }
 
-var isPackingValid = function(packing: number)
+var isPackingValid = function(packing: number): boolean
 {
-    var validPacking = false;
-    for (var i = 0; i < 5 && !validPacking; ++i) {
-        if (packing === (1 << i))
-            validPacking = true;
-    }
+    var valid = [1, 2, 4, 8, 16];
+    var validPacking = (valid.indexOf(packing) != -1);
     return validPacking;
 }
-var structSetup = function(obj1: Struct, packing?: number)
+var structSetup = function(obj1: Struct, packing?: number): void
 {
     var obj: any = obj1;
     packing = (packing === undefined ? 8 : packing);
     var validPacking = isPackingValid(packing);
     if (!validPacking)
-        throw "Not a valid packing";
+        throw new Error("Not a valid packing");
 
     obj.packing = packing;
     var o = buildOffset(obj.mems, obj.packing);
@@ -486,27 +525,28 @@ export class Struct {
         }
         this.assign(initialzationArgs);
     }
-    assign(namedVal?: {[key: string]: any} | ArrayBuffer) {
+    assign(namedVal?: {[key: string]: any} | ArrayBuffer): void {
         var structObj: any = this;
         var struct = structObj.__struct__;
         if (struct === undefined || !(struct.prototype instanceof Struct))
-            throw "Not a struct type";
+            throw new Error("Not a struct type");
 
         if (Object.prototype.toString.call(namedVal) === "[object ArrayBuffer]")
             this.read(<ArrayBuffer>namedVal, 0);
         else if (namedVal !== undefined)
             assignMembers(namedVal, structObj);
     };
-    read(ab: ArrayBuffer, off: number) {
+    read(ab: ArrayBuffer, off: number): void {
         var structObj: any = this;
         var struct = structObj.__struct__;
         if (struct === undefined || !(struct.prototype instanceof Struct))
-            throw "Not a struct type";
+            throw new Error("Not a struct type");
 
         deserialize(ab, off, structObj);
     };
-    static unique: number = 0;
+    protected static unique: number = 0;
     static size: number = 0;
+    static get type(): string {return ""};   //type of the struct
     static sizeof(obj: typeof Struct | Struct): number {
         let structObj: any = obj;
         if (structObj.prototype instanceof Struct)
@@ -515,7 +555,7 @@ export class Struct {
         var struct = structObj.__struct__;
 
         if (struct === undefined || !(struct.prototype instanceof Struct))
-            throw "Not a struct type";
+            throw new Error("Not a struct type");
 
         if (!struct.dynamic)
             return struct.size;
@@ -531,10 +571,9 @@ export class Struct {
     }
     static offsetof(member: string): number {return -1;}
     static CreateMatchHeader(includeMember: {[key: string]: any}): ArrayBuffer {return <any>null;}
-    static ArrayOf(type: string | typeof Struct, numElem: number) {
+    static ArrayOf(type: string | typeof Struct, numElem: number): any[] {
         if (typeof (type) === 'string') {
-            if(TypedArr.hasOwnProperty(type))
-            {
+            if(TypedArr.hasOwnProperty(type)) {
                 var arr = [];
                 for (var i = 0; i < numElem; ++i) {
                     arr.push(0);
@@ -542,7 +581,7 @@ export class Struct {
                 return arr;
             }
             else {
-                throw "Unknown type";
+                throw new Error("Unknown type");
             }
         }
         else if ((<any>type).prototype instanceof Struct) {
@@ -552,13 +591,13 @@ export class Struct {
             }
             return arr;
         }
-        throw "Type is not struct type";
+        throw new Error("Type is not struct type");
     };
     static buffer(obj: Struct): ArrayBuffer {
         let structObj: any = obj;
         var struct = structObj.__struct__;
         if (struct === undefined || !(struct.prototype instanceof Struct))
-            throw "Not a struct type";
+            throw new Error("Not a struct type");
 
         return serialize(structObj);
     };
@@ -573,17 +612,18 @@ export class Struct {
             memfns = undefined;
         }
         class NamedStruct extends Struct {
-            static mems: MemberDefinition[] = mems;
-            static type: string = "struct" + (++Struct.unique);
+            private static uniqueName = "struct" + (++Struct.unique);
+            static get mems(): MemberDefinition[] {return mems};
+            static get type(): string {return NamedStruct.uniqueName};
             static def = (function () {
                 var def: {[key: string]: MemberDefinition} = {};
                 for (var i = 0; i < mems.length; ++i) {
                     var mem = mems[i];
                     var m = mem.name;
                     if (def.hasOwnProperty(m))
-                        throw "Member already Exists";
+                        throw new Error("Member already Exists");
                     if (mem.val === undefined)
-                        throw "Default value is required and type should be convertible to its member type";
+                        throw new Error("Default value is required and type should be convertible to its member type");
                     def[m] = mem;
                     //TODO: Check no dynamic structure allowed inside a dynamic structure
                 }

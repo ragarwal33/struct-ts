@@ -57,8 +57,8 @@ function RunPackingTest() {
 function RunStructTest() {
     //compile structure definition
     var TestStrDArr = Struct.Create([
-            { name: 'str', type: 'char[2]', val: Struct.ArrayOf('int8', 2) },
-            { name: 'd1', type: 'double[1]', val: [2.0] },
+        { name: 'str', type: 'char[2]', val: Struct.ArrayOf('int8', 2) },
+        { name: 'd1', type: 'double[1]', val: [2.0] },
     ]);
 
     //create structure variable
@@ -94,7 +94,7 @@ function RunStructTest() {
     }
 
     var Test1 = Struct.Create([
-            { name: 't', type: 'struct[2]', val: [new Test({ d1: [5], c1: 6 }), new Test({ d1: [6], c1: 7 })] },
+        { name: 't', type: `${Test.type}[2]`, val: [new Test({ d1: [5], c1: 6 }), new Test({ d1: [6], c1: 7 })] },
     ]);
     {
         var sz1 = Test1.size;
@@ -135,7 +135,7 @@ function RunStructTest() {
     ], {}, 4);
     var t2 = Struct.Create([
         { name: 'cvar', type: 'int8', val: 1 },
-        { name: 't12', type: 'struct[2]', val: Struct.ArrayOf(t1, 2) },
+        { name: 't12', type: `${t1.type}[2]`, val: Struct.ArrayOf(t1, 2) },
     ], {}, 8);
 
     sz = t1.size;

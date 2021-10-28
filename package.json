@@ -1,11 +1,12 @@
 {
   "name": "@ragarwal33/struct-ts",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "description": "C compatible struct with automatic padding and array member support",
   "main": "dist/struct.js",
   "types": "dist/struct.d.ts",
-  "scripts": {
+    "scripts": {
     "build": "tsc",
+    "struct": "node dist/struct.js",
     "test": "node dist/test.js",
     "e2e": "npm run build && npm run test"
   },
@@ -19,13 +20,27 @@
     "registry": "https://npm.pkg.github.com/ragarwal33"
   },
   "devDependencies": {
+    "ts-node": "^10.4.0",
     "typescript": "*"
   },
   "keywords": [
-    "c", "cplusplus", "c++",
-    "struct", "structure",
-    "serialization", "encoding",
-    "typescript", "javascript",
-    "padding", "packing", "pack", "unpack", "packet", "buffer",
-    "encode", "encoding", "schema"]
+    "c",
+    "cplusplus",
+    "c++",
+    "struct",
+    "structure",
+    "serialization",
+    "encoding",
+    "typescript",
+    "javascript",
+    "padding",
+    "packing",
+    "pack",
+    "unpack",
+    "packet",
+    "buffer",
+    "encode",
+    "encoding",
+    "schema"
+  ]
 }
