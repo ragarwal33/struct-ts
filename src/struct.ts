@@ -264,8 +264,15 @@ var deserialize = function (ab: ArrayBuffer, off: number, obj: any): number {
     return sz;
 }
 var isRegisteredStruct = function(type: string): boolean {
-    var regex = /^struct\d+$/;
-    return regex.test(type)
+    if(Struct.registeredTypes.hasOwnProperty(type))
+        return true;
+    return false;
+}
+var isKnownType = function(type: string) {
+    var natives = Object.keys(TypedArr);
+    if(natives.indexOf(type) !== -1)
+        return true;
+    return isRegisteredStruct(type);
 }
 var isCompatibleArray = function (val: any, type: string, arrSz: number): boolean {
     var typeCheck = false;
@@ -416,6 +423,8 @@ var checkMember = function(val: any, mem: MemberDefinition): void {
     //verify type of the value
     var typeInfo = extractTypeInfo(type);
     var t = typeInfo.type;
+    if(!isKnownType(t))
+        throw new Error(`Unknown Type ${t}`);
     var arrSz = typeInfo.sz;
     var isArr = typeInfo.arr;
     if (isArr) {
@@ -545,6 +554,7 @@ export class Struct {
         deserialize(ab, off, structObj);
     };
     protected static unique: number = 0;
+    static registeredTypes: {[key: string]: typeof Struct} = {};
     static size: number = 0;
     static get type(): string {return ""};   //type of the struct
     static sizeof(obj: typeof Struct | Struct): number {
@@ -577,6 +587,13 @@ export class Struct {
                 var arr = [];
                 for (var i = 0; i < numElem; ++i) {
                     arr.push(0);
+                }
+                return arr;
+            }
+            else if(isRegisteredStruct(type) && Struct.registeredTypes.hasOwnProperty(type)) {
+                var arr = [];
+                for (var i = 0; i < numElem; ++i) {
+                    arr.push(new Struct.registeredTypes[type]());
                 }
                 return arr;
             }
@@ -652,7 +669,7 @@ export class Struct {
                 (<any>NamedStruct.prototype)[keys[i]] = memfns[keys[i]];
             }
         }
-
+        Struct.registeredTypes[NamedStruct.type] = NamedStruct;
         return NamedStruct;
     };
 }
