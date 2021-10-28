@@ -1,6 +1,6 @@
 {
   "name": "@ragarwal33/struct-ts",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "C compatible struct with automatic padding and array member support",
   "main": "dist/struct.js",
   "types": "dist/struct.d.ts",

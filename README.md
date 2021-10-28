@@ -109,8 +109,8 @@ var Test = Struct.Create([
     {name: 'z', type: 'ushort[3]', val: Struct.ArrayOf('ushort', 3)}
 ]);
 var TestEmbedded = Struct.Create([
-    {name: 'arrTest', type: 'struct[2]', val: Struct.ArrayOf(Test, 2)},
-    {name: 'anotherArr', type: 'struct[2]', val: [new Test(), new Test()]}
+    {name: 'arrTest', type: `${Test.type}[2]`, val: Struct.ArrayOf(Test, 2)},
+    {name: 'anotherArr', type: `${Test.type}[2]`, val: [new Test(), new Test()]}
 ])
 ```
 Member Access
